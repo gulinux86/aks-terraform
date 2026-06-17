@@ -1,0 +1,90 @@
+name: terraform-destroy
+
+# Manual, controlled teardown: you pick the environment and layer when you run it.
+# Destructive — gated by a typed confirmation and, for PROD, by the `prod` GitHub
+# Environment (required reviewer). Shares the `terraform-<env>` concurrency group
+# with terraform-deploy so a destroy can never overlap an apply for the same env.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [hml, prod]
+      layer:
+        description: "Which layer(s) to destroy"
+        required: true
+        default: both
+        type: choice
+        options: [foundation, workload, both]
+      confirm:
+        description: "Type the environment name (hml/prod) to confirm destroy"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write # OIDC
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    # Ties to the GitHub Environment: `prod` carries the required reviewer, so a
+    # prod run pauses for approval before this job starts.
+    environment: ${{ github.event.inputs.environment }}
+    concurrency:
+      group: terraform-${{ github.event.inputs.environment }}
+      cancel-in-progress: false
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Confirm destroy
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "$ENVIRONMENT" ]; then
+            echo "Confirmation '${{ github.event.inputs.confirm }}' does not match environment '$ENVIRONMENT'. Aborting." >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0 # v6.0.3
+
+      - name: Azure login (federated OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "~> 1.10"
+
+      - name: Resolve layers
+        run: |
+          # "both" must destroy workload BEFORE foundation (reverse of apply):
+          # workload depends on foundation's state and on a live cluster.
+          if [ "${{ github.event.inputs.layer }}" = "both" ]; then
+            echo "LAYERS=workload foundation" >> "$GITHUB_ENV"
+          else
+            echo "LAYERS=${{ github.event.inputs.layer }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Destroy
+        run: |
+          set -euo pipefail
+          for L in $LAYERS; do
+            echo "::group::terraform destroy $L ($ENVIRONMENT)"
+            terraform -chdir="$L" init -input=false \
+              -backend-config="environments/${ENVIRONMENT}/backend.hcl"
+            terraform -chdir="$L" destroy -auto-approve -input=false \
+              -var-file="environments/${ENVIRONMENT}/terraform.tfvars"
+            echo "::endgroup::"
+          done

@@ -1,0 +1,10 @@
+# Trivy ignore file — reviewed, documented exceptions only.
+#
+# Each entry MUST carry a reason. These are accepted *portfolio* trade-offs.
+# Confirm the exact IDs that fire against the first CI scan and TIGHTEN for prod.
+#
+# How to verify locally:
+#   trivy config --severity HIGH,CRITICAL .
+#
+# (No exceptions yet — populate after the first scan once the foundation/workload
+#  resources exist. See the AKS ARCHITECTURE cost/trade-off notes.)
