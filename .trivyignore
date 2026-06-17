@@ -1,10 +1,23 @@
 # Trivy ignore file — reviewed, documented exceptions only.
 #
 # Each entry MUST carry a reason. These are accepted *portfolio* trade-offs.
-# Confirm the exact IDs that fire against the first CI scan and TIGHTEN for prod.
+# TIGHTEN for true production (see ARCHITECTURE.md §11).
 #
 # How to verify locally:
-#   trivy config --severity HIGH,CRITICAL .
-#
-# (No exceptions yet — populate after the first scan once the foundation/workload
-#  resources exist. See the AKS ARCHITECTURE cost/trade-off notes.)
+#   trivy config --severity HIGH,CRITICAL --ignorefile .trivyignore .
+
+# AZU-0012 — Storage Account network rules default to Allow.
+# The state Storage Account must be reachable by GitHub-hosted runners (dynamic
+# IPs) for `terraform init`/state R/W. A default-Deny ACL would lock CI out;
+# tightening requires a Private Endpoint + in-VNet/self-hosted runners — a
+# deliberate §11 hardening item, out of scope for the lean baseline. Shared keys
+# are already disabled (Entra-only) and TLS 1.2 is enforced.
+AVD-AZU-0012
+
+# AZU-0013 — Key Vault network ACL does not default to Deny.
+# Applies to the state CMK vault (reached by the Storage Account + CI/operators)
+# and the etcd KMS vault (reached by the AKS control plane over its public
+# endpoint, per key_vault_network_access = "Public"). Default-Deny would break
+# those access paths without Private Endpoints; restricting them is a §11
+# hardening item. Both vaults still enforce RBAC + purge protection.
+AVD-AZU-0013

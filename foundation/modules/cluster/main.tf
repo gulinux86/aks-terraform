@@ -65,6 +65,7 @@ resource "azurerm_kubernetes_cluster" "this" {
   network_profile {
     network_plugin      = "azure"
     network_plugin_mode = "overlay"
+    network_policy      = "calico"                 # enforce NetworkPolicy (deny-by-intent between pods)
     outbound_type       = "userAssignedNATGateway" # egress via the node subnet's NAT GW
     pod_cidr            = "192.168.0.0/16"
     service_cidr        = "172.16.0.0/16"
