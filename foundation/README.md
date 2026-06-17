@@ -20,6 +20,12 @@ terraform -chdir=foundation apply -var-file=environments/hml/terraform.tfvars
 | `node-pool`          | System node pool                                            |
 | `private-endpoints`  | Private endpoints + private DNS zones                       |
 | `bastion`            | **Optional** Azure Bastion (off by default — `command invoke` covers CI) |
+| `monitor`            | **Optional** Log Analytics workspace (observability backplane) — off by default |
 
 > An additional user node pool is available via `user_node_pool_enabled = true`
 > (off by default; the system pool runs workloads in the lean baseline).
+>
+> Observability is enabled with `observability_enabled = true`: it creates a Log
+> Analytics workspace (`monitor` module) and turns on control-plane diagnostic
+> logs (Level 1) + Container Insights / `oms_agent` (Level 2) on the cluster. On
+> by default in the `hml`/`prod` tfvars.

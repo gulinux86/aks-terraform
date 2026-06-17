@@ -22,20 +22,32 @@ module "network" {
   tags                = var.tags
 }
 
+module "monitor" {
+  source = "./modules/monitor"
+  count  = var.observability_enabled ? 1 : 0
+
+  project_name        = var.project_name
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  log_retention_days  = var.log_retention_days
+  tags                = var.tags
+}
+
 module "cluster" {
   source = "./modules/cluster"
 
-  project_name             = var.project_name
-  location                 = var.location
-  resource_group_name      = azurerm_resource_group.this.name
-  kubernetes_version       = var.kubernetes_version
-  node_subnet_id           = module.network.node_subnet_id
-  node_vm_size             = var.node_vm_size
-  node_count               = var.node_count
-  node_min_count           = var.node_min_count
-  node_max_count           = var.node_max_count
-  cluster_admin_object_ids = var.cluster_admin_object_ids
-  tags                     = var.tags
+  project_name               = var.project_name
+  location                   = var.location
+  resource_group_name        = azurerm_resource_group.this.name
+  kubernetes_version         = var.kubernetes_version
+  node_subnet_id             = module.network.node_subnet_id
+  node_vm_size               = var.node_vm_size
+  node_count                 = var.node_count
+  node_min_count             = var.node_min_count
+  node_max_count             = var.node_max_count
+  cluster_admin_object_ids   = var.cluster_admin_object_ids
+  log_analytics_workspace_id = var.observability_enabled ? module.monitor[0].workspace_id : null
+  tags                       = var.tags
 }
 
 module "node_pool" {

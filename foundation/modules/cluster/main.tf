@@ -41,6 +41,15 @@ resource "azurerm_kubernetes_cluster" "this" {
     key_vault_network_access = "Public"
   }
 
+  # --- Container Insights (Level 2) — enabled when a workspace is provided ---
+  dynamic "oms_agent" {
+    for_each = var.log_analytics_workspace_id != null ? [1] : []
+    content {
+      log_analytics_workspace_id      = var.log_analytics_workspace_id
+      msi_auth_for_monitoring_enabled = true
+    }
+  }
+
   default_node_pool {
     name                   = "system"
     vm_size                = var.node_vm_size

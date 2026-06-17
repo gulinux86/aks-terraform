@@ -49,6 +49,12 @@ variable "cluster_admin_object_ids" {
   default     = []
 }
 
+variable "log_analytics_workspace_id" {
+  type        = string
+  description = "Log Analytics workspace ID. When set, enables Container Insights (oms_agent, Level 2) and control-plane diagnostic logs (Level 1). Null = no observability (lean baseline)."
+  default     = null
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to the cluster resources"

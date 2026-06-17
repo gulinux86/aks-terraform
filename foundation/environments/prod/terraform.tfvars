@@ -10,6 +10,10 @@ node_max_count = 3
 
 cluster_admin_object_ids = []
 
+# Observability: Log Analytics + control-plane diagnostics (L1) + Container Insights (L2).
+observability_enabled = true
+log_retention_days    = 90
+
 tags = {
   Project     = "aks"
   Environment = "prod"
