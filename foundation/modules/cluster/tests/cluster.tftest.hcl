@@ -79,3 +79,35 @@ run "private_cluster_security_invariants" {
     error_message = "Nodes must not have public IPs"
   }
 }
+
+run "no_observability_by_default" {
+  command = plan
+
+  assert {
+    condition     = length(azurerm_kubernetes_cluster.this.oms_agent) == 0
+    error_message = "Container Insights must be off when no workspace is provided"
+  }
+
+  assert {
+    condition     = length(azurerm_monitor_diagnostic_setting.aks) == 0
+    error_message = "Diagnostic settings must be off when no workspace is provided"
+  }
+}
+
+run "observability_when_workspace_wired" {
+  command = plan
+
+  variables {
+    log_analytics_workspace_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/test-law"
+  }
+
+  assert {
+    condition     = length(azurerm_kubernetes_cluster.this.oms_agent) == 1
+    error_message = "Container Insights (oms_agent) must be enabled when a workspace is provided"
+  }
+
+  assert {
+    condition     = length(azurerm_monitor_diagnostic_setting.aks) == 1
+    error_message = "Control-plane diagnostic settings must be created when a workspace is provided"
+  }
+}

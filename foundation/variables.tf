@@ -55,6 +55,18 @@ variable "user_node_pool_enabled" {
   default     = false
 }
 
+variable "observability_enabled" {
+  type        = bool
+  description = "Create a Log Analytics workspace and enable control-plane diagnostic logs (Level 1) + Container Insights (Level 2) on the cluster."
+  default     = false
+}
+
+variable "log_retention_days" {
+  type        = number
+  description = "Log Analytics retention in days (when observability is enabled)"
+  default     = 30
+}
+
 variable "tags" {
   type        = map(string)
   description = "A map of tags to add to all resources"

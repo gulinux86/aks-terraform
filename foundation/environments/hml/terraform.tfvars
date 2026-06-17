@@ -13,6 +13,10 @@ node_max_count = 3
 # (the CI deploy identity). Fill in after bootstrap.
 cluster_admin_object_ids = []
 
+# Observability: Log Analytics + control-plane diagnostics (L1) + Container Insights (L2).
+observability_enabled = true
+log_retention_days    = 30
+
 tags = {
   Project     = "aks"
   Environment = "hml"

@@ -96,6 +96,19 @@ add-ons (CoreDNS, kube-proxy) are AKS-managed and the CNI is a cluster property,
 the EKS `eks-addons` "core add-ons as code / version-skew" effort has no Azure
 counterpart — documented here rather than inventing parity busywork.
 
+## 6.5 Observability (`monitor` module)
+
+Toggled with `observability_enabled` (on in `hml`/`prod` tfvars). The `monitor`
+module creates a Log Analytics workspace; the cluster then ships **control-plane
+diagnostic logs** (Level 1 — `kube-apiserver`, `kube-audit-admin`,
+`kube-controller-manager`, `kube-scheduler`, `cluster-autoscaler`, `guard`,
+plus `AllMetrics`) and **Container Insights** (Level 2 — `oms_agent` with MSI
+auth) to it. The diagnostic setting and `oms_agent` are cluster-scoped and live
+in the `cluster` module (which consumes the workspace ID); the workspace stays in
+the `monitor` module so there is no cluster↔monitor dependency cycle. This is the
+Azure analog of the EKS `enabled_cluster_log_types` → CloudWatch, expanded into a
+composed module because Azure observability spans several resources.
+
 ## 7. State & backend
 
 `azurerm` backend with partial config per environment
@@ -155,4 +168,4 @@ interface-endpoint fleet (~$73). Choosing `command invoke` over Azure Bastion
 | Private endpoints | Empty by default | Private Endpoints for the etcd/state Key Vault + ACR |
 | Identity | One UAI per workload | Keep per-workload; review role-assignment scopes periodically |
 | State account | Single shared account (CMK) | Per-subscription/per-env accounts + network-restricted access |
-| Logs | Minimal control-plane logs | Diagnostic settings → Log Analytics with retention/alerting |
+| Logs | Diagnostic logs + Container Insights via the `monitor` module (toggle) | + alert rules, managed Prometheus + Grafana, longer retention |

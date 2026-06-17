@@ -44,6 +44,7 @@ jobs:
           - bootstrap
           - foundation/modules/network
           - foundation/modules/cluster
+          - foundation/modules/monitor
           - workload/modules/alb-controller
     steps:
       - name: Checkout
