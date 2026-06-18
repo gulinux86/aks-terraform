@@ -15,8 +15,8 @@ variable "vnet_address_space" {
 
 variable "kubernetes_version" {
   type        = string
-  description = "Kubernetes version for the AKS cluster. Pin a version in standard support."
-  default     = "1.31"
+  description = "Kubernetes version for the AKS cluster. Pin a version in standard support (not LTS-only). Verify with: az aks get-versions --location <region>."
+  default     = "1.34"
 }
 
 variable "node_vm_size" {

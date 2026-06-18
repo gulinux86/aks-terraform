@@ -1,7 +1,7 @@
 project_name       = "aks-prod"
 location           = "eastus"
 vnet_address_space = ["10.1.0.0/16"]
-kubernetes_version = "1.31"
+kubernetes_version = "1.34"
 
 node_vm_size   = "Standard_B2s"
 node_count     = 2
