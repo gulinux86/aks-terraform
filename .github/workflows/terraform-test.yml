@@ -4,12 +4,11 @@ name: terraform-test
 # providers (command = plan), so this job needs NO Azure credentials and creates
 # NO real infrastructure — it runs on PRs from any branch/fork.
 on:
+  # No `paths:` filter: this is a REQUIRED status check, so it must report on
+  # every PR. A path-filtered required check deadlocks PRs that don't touch the
+  # filtered paths (e.g. a workflow-only change) — they wait forever.
   pull_request:
     branches: [master, develop, main]
-    paths:
-      - "**.tf"
-      - "**.tftest.hcl"
-      - ".github/workflows/terraform-test.yml"
   workflow_dispatch:
 
 permissions:
