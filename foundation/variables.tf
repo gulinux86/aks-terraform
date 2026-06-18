@@ -21,14 +21,14 @@ variable "kubernetes_version" {
 
 variable "node_vm_size" {
   type        = string
-  description = "VM size for the system node pool. B-series (burstable) is the cheap portfolio default."
-  default     = "Standard_B2s"
+  description = "VM size for the system node pool. Must be allowed by the subscription/region (some subscriptions restrict SKU families). Verify with: az vm list-skus --location <region> --resource-type virtualMachines."
+  default     = "Standard_D2s_v7"
 }
 
 variable "node_count" {
   type        = number
   description = "Desired number of nodes in the system node pool"
-  default     = 2
+  default     = 1
 }
 
 variable "node_min_count" {
@@ -39,8 +39,8 @@ variable "node_min_count" {
 
 variable "node_max_count" {
   type        = number
-  description = "Maximum nodes (autoscaler)"
-  default     = 3
+  description = "Maximum nodes (autoscaler). Keep node_max_count * vCPU(node_vm_size) within the subscription vCPU quota."
+  default     = 2
 }
 
 variable "cluster_admin_object_ids" {
