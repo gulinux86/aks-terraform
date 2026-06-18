@@ -1,7 +1,7 @@
 project_name       = "aks-hml"
 location           = "eastus"
 vnet_address_space = ["10.0.0.0/16"]
-kubernetes_version = "1.31"
+kubernetes_version = "1.34"
 
 # Burstable, cheap portfolio default. Standard_B2s = 2 vCPU / 4 GiB.
 node_vm_size   = "Standard_B2s"
