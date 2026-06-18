@@ -37,9 +37,10 @@ run "workload_identity_and_extension_invariants" {
     error_message = "Federated issuer must be the cluster OIDC issuer URL"
   }
 
-  # Installed as a managed cluster extension — never via helm/kubernetes providers.
+  # Least privilege: the config-manager role is scoped to the cluster resource
+  # group, not the whole subscription.
   assert {
-    condition     = azurerm_kubernetes_cluster_extension.alb.cluster_id == var.cluster_id
-    error_message = "ALB Controller must target the cluster via a cluster extension"
+    condition     = endswith(azurerm_role_assignment.alb_config_manager.scope, "/resourceGroups/${var.resource_group_name}")
+    error_message = "ALB Controller role assignments must be scoped to the cluster resource group"
   }
 }

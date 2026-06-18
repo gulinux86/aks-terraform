@@ -1,10 +1,20 @@
-# Application Gateway for Containers — ALB Controller.
+# Application Gateway for Containers — ALB Controller (Workload Identity side).
 #
-# Installed as a control-plane-managed CLUSTER EXTENSION (not a helm_release /
-# kubernetes_* resource), so the install path does not need network reach to the
-# private API server. Authorized via Workload Identity: a dedicated user-assigned
-# identity bound by a federated credential to the controller's service account,
-# with narrowly scoped role assignments (no node-identity sharing).
+# This module provisions only the AZURE-SIDE identity for the controller:
+#   - a dedicated user-assigned managed identity,
+#   - a federated credential binding it to exactly one service account,
+#   - narrowly scoped role assignments.
+#
+# The controller itself is installed by Helm THROUGH `az aks command invoke`
+# (see .github/workflows/terraform-deploy.yml), NOT here. Rationale: the AGC ALB
+# Controller has no supported AKS cluster-extension type (confirmed: 400
+# ExtensionTypeRegistrationGetFailed in the target region), and the Terraform
+# helm/kubernetes providers cannot reach a private API server from a
+# GitHub-hosted runner. `command invoke` tunnels Helm through the AKS managed
+# control plane — the same managed path used for kubectl — so no runner network
+# reach and no in-cluster Terraform provider are required. The identity client
+# ID below is passed to the Helm release so the controller's service account is
+# annotated for Workload Identity.
 
 # --- 1. Dedicated identity (the IAM-role equivalent) ---
 resource "azurerm_user_assigned_identity" "alb" {
@@ -42,30 +52,4 @@ resource "azurerm_role_assignment" "alb_subnet_network" {
   scope                = var.alb_subnet_id
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_user_assigned_identity.alb.principal_id
-}
-
-# --- 4. The controller itself, as a managed cluster extension ---
-# The extension is installed by the Azure control plane; configuration_settings
-# pass the identity client ID through so the controller's service account is
-# annotated for Workload Identity (task 5.4) without a kubernetes provider.
-#
-# NOTE (open question 5.1): confirm Application Gateway for Containers + the ALB
-# Controller extension is GA in the target region and that this extension_type /
-# configuration surface is correct; otherwise pin via `azapi` or fall back to
-# AGIC (managed add-on) / NGINX. The federated credential + identity + role
-# assignments above are stable regardless of that choice.
-resource "azurerm_kubernetes_cluster_extension" "alb" {
-  name           = "alb-controller"
-  cluster_id     = var.cluster_id
-  extension_type = "microsoft.azure-alb-controller"
-
-  configuration_settings = {
-    "albController.namespace"            = var.controller_namespace
-    "albController.podIdentity.clientId" = azurerm_user_assigned_identity.alb.client_id
-  }
-
-  depends_on = [
-    azurerm_federated_identity_credential.alb,
-    azurerm_role_assignment.alb_config_manager,
-  ]
 }
