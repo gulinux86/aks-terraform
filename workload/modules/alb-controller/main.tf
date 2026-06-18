@@ -16,11 +16,11 @@ resource "azurerm_user_assigned_identity" "alb" {
 
 # --- 2. Federated credential: bind the identity to exactly one service account ---
 resource "azurerm_federated_identity_credential" "alb" {
-  name      = "alb-controller-fed"
-  parent_id = azurerm_user_assigned_identity.alb.id
-  issuer    = var.oidc_issuer_url
-  subject   = "system:serviceaccount:${var.controller_namespace}:${var.service_account_name}"
-  audience  = ["api://AzureADTokenExchange"]
+  name                      = "alb-controller-fed"
+  user_assigned_identity_id = azurerm_user_assigned_identity.alb.id
+  issuer                    = var.oidc_issuer_url
+  subject                   = "system:serviceaccount:${var.controller_namespace}:${var.service_account_name}"
+  audience                  = ["api://AzureADTokenExchange"]
 }
 
 # --- 3. Narrowly scoped role assignments (least privilege) ---

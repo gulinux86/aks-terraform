@@ -4,7 +4,7 @@
 # locally) rather than in the monitor module — which keeps the workspace module
 # free of any dependency on the cluster. Created only when a workspace is wired.
 resource "azurerm_monitor_diagnostic_setting" "aks" {
-  count = var.log_analytics_workspace_id != null ? 1 : 0
+  count = var.observability_enabled ? 1 : 0
 
   name                       = "${var.project_name}-aks-diag"
   target_resource_id         = azurerm_kubernetes_cluster.this.id

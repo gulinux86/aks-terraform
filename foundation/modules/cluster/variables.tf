@@ -49,9 +49,15 @@ variable "cluster_admin_object_ids" {
   default     = []
 }
 
+variable "observability_enabled" {
+  type        = bool
+  description = "Enable Container Insights (oms_agent, Level 2) + control-plane diagnostic logs (Level 1). Must be a plan-time-known value (drives count/for_each)."
+  default     = false
+}
+
 variable "log_analytics_workspace_id" {
   type        = string
-  description = "Log Analytics workspace ID. When set, enables Container Insights (oms_agent, Level 2) and control-plane diagnostic logs (Level 1). Null = no observability (lean baseline)."
+  description = "Log Analytics workspace ID consumed when observability_enabled = true (the value; gating is done by observability_enabled)."
   default     = null
 }
 

@@ -46,6 +46,7 @@ module "cluster" {
   node_min_count             = var.node_min_count
   node_max_count             = var.node_max_count
   cluster_admin_object_ids   = var.cluster_admin_object_ids
+  observability_enabled      = var.observability_enabled
   log_analytics_workspace_id = var.observability_enabled ? module.monitor[0].workspace_id : null
   tags                       = var.tags
 }
