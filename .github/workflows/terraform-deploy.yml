@@ -136,6 +136,18 @@ jobs:
             echo "::endgroup::"
           done
 
+      # Re-login right before the az CLI step: the GitHub OIDC client assertion
+      # lives only ~5 min, and the apply can outlast it — Terraform mints its own
+      # OIDC token per operation (ARM_USE_OIDC) but the az CLI session does not.
+      # A fresh login here exchanges a new assertion for a ~1h access token.
+      - name: Azure re-login (fresh token for command invoke)
+        if: contains(env.LAYERS, 'workload')
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       # Install the ALB Controller via Helm THROUGH `az aks command invoke`.
       # The AGC ALB Controller has no supported AKS cluster-extension type, and
       # the Terraform helm/kubernetes providers cannot reach the private API from

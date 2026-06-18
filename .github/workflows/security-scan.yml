@@ -5,14 +5,11 @@ name: security-scan
 # results appear under the repository's Security tab. Reviewed exceptions live in
 # the committed `.trivyignore`.
 on:
+  # No `paths:` filter: this is a REQUIRED status check, so it must report on
+  # every PR. A path-filtered required check deadlocks PRs that don't touch the
+  # filtered paths (e.g. a workflow-only change) — they wait forever.
   pull_request:
     branches: [master, develop, main]
-    paths:
-      - "**.tf"
-      - "**.tfvars"
-      - "**.hcl"
-      - ".trivyignore"
-      - ".github/workflows/security-scan.yml"
   workflow_dispatch:
 
 permissions:
