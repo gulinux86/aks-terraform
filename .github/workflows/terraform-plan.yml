@@ -35,6 +35,8 @@ env:
   ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  # Injected list var (kept out of the committed tfvars). HCL list literal.
+  TF_VAR_cluster_admin_object_ids: ${{ vars.AKS_CLUSTER_ADMIN_OBJECT_IDS }}
 
 jobs:
   plan:
