@@ -1,7 +1,8 @@
-# alb-controller module — App Gateway for Containers via cluster extension
+# alb-controller module — Workload Identity for the App Gateway for Containers ALB Controller
 
-Application Gateway for Containers ALB Controller installed as a control-plane-managed cluster extension (not Helm/Kubernetes providers), authorized via Workload Identity (dedicated user-assigned identity + federated credential bound to the controller service account, narrowly scoped role assignments).
+Provisions the Azure-side identity for the ALB Controller: a dedicated user-assigned managed identity, a federated credential bound to one service account, and narrowly scoped role assignments. The controller itself is installed by Helm via `az aks command invoke` in the deploy workflow (no Terraform helm/kubernetes provider, no runner API reach) — the AGC ALB Controller has no supported AKS cluster-extension type.
 
+/dev/stdout updated successfully
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -22,7 +23,6 @@ No modules.
 | Name | Type |
 |------|------|
 | [azurerm_federated_identity_credential.alb](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/federated_identity_credential) | resource |
-| [azurerm_kubernetes_cluster_extension.alb](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster_extension) | resource |
 | [azurerm_role_assignment.alb_config_manager](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.alb_reader](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.alb_subnet_network](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
@@ -46,7 +46,8 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_extension_id"></a> [extension\_id](#output\_extension\_id) | ID of the ALB Controller cluster extension |
-| <a name="output_identity_client_id"></a> [identity\_client\_id](#output\_identity\_client\_id) | Client ID of the ALB Controller identity (annotates the service account) |
-| <a name="output_service_account"></a> [service\_account](#output\_service\_account) | namespace/name of the controller service account bound by the federated credential |
+| <a name="output_controller_namespace"></a> [controller\_namespace](#output\_controller\_namespace) | Namespace the ALB Controller is installed into (Helm --namespace) |
+| <a name="output_identity_client_id"></a> [identity\_client\_id](#output\_identity\_client\_id) | Client ID of the ALB Controller identity (passed to the Helm release: albController.podIdentity.clientID) |
+| <a name="output_service_account"></a> [service\_account](#output\_service\_account) | namespace/name of the controller service account |
+| <a name="output_service_account_name"></a> [service\_account\_name](#output\_service\_account\_name) | Service account bound by the federated credential (must match the chart's SA) |
 <!-- END_TF_DOCS -->

@@ -136,18 +136,27 @@ jobs:
             echo "::endgroup::"
           done
 
-      # In-cluster verification WITHOUT network reach to the private API server:
-      # `az aks command invoke` tunnels kubectl through the AKS managed control
-      # plane. Runs after a workload apply to confirm the ALB Controller is up.
-      - name: Verify ALB Controller via command invoke
+      # Install the ALB Controller via Helm THROUGH `az aks command invoke`.
+      # The AGC ALB Controller has no supported AKS cluster-extension type, and
+      # the Terraform helm/kubernetes providers cannot reach the private API from
+      # a GitHub-hosted runner — so Helm runs over the AKS managed tunnel (same
+      # path as kubectl), with no runner network reach. The identity client ID
+      # (Terraform output) is passed so the controller's SA gets Workload Identity.
+      - name: Install + verify ALB Controller via command invoke
         if: contains(env.LAYERS, 'workload')
         run: |
           set -euo pipefail
           terraform -chdir=foundation init -input=false \
             -backend-config="environments/${ENVIRONMENT}/backend.hcl" >/dev/null
+          terraform -chdir=workload init -input=false \
+            -backend-config="environments/${ENVIRONMENT}/backend.hcl" >/dev/null
           RG=$(terraform -chdir=foundation output -raw resource_group_name)
           CLUSTER=$(terraform -chdir=foundation output -raw cluster_name)
+          NS=$(terraform -chdir=workload output -raw alb_controller_namespace)
+          CLIENT_ID=$(terraform -chdir=workload output -raw alb_controller_identity_client_id)
+          echo "Installing ALB Controller into '$NS' on cluster '$CLUSTER' via command invoke…"
+          # Pinning albController chart version is recommended for prod (omit = latest).
           az aks command invoke \
             --resource-group "$RG" \
             --name "$CLUSTER" \
-            --command "kubectl get pods -n azure-alb-system -o wide"
+            --command "helm upgrade --install alb-controller oci://mcr.microsoft.com/application-lb/charts/alb-controller --namespace ${NS} --create-namespace --set albController.namespace=${NS} --set albController.podIdentity.clientID=${CLIENT_ID} && kubectl rollout status deployment/alb-controller -n ${NS} --timeout=180s && kubectl get pods -n ${NS} -o wide"

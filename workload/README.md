@@ -3,10 +3,13 @@
 In-cluster add-ons. Reads `foundation` outputs via `terraform_remote_state`, so
 **`foundation` must be applied first**.
 
-Today: the **Application Gateway for Containers ALB Controller**, installed as a
-**managed cluster extension** (deployed by the Azure control plane), authorized via
-**Workload Identity**. The Terraform `kubernetes`/`helm` providers are deliberately
-absent — a private API server is unreachable from GitHub-hosted runners.
+Today: the **Application Gateway for Containers ALB Controller**, authorized via
+**Workload Identity**. Terraform owns only the Azure-side identity (user-assigned
+managed identity + federated credential + scoped role assignments); the controller
+itself is installed by **Helm run through `az aks command invoke`** in the deploy
+workflow. The Terraform `kubernetes`/`helm` providers are deliberately absent — a
+private API server is unreachable from GitHub-hosted runners, and the AGC ALB
+Controller has no supported AKS cluster-extension type.
 
 ```bash
 terraform -chdir=workload init  -backend-config=environments/hml/backend.hcl

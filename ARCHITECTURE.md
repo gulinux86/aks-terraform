@@ -23,7 +23,7 @@ primitives. The valuable ~30% is three deliberate divergences (see below).
 | KMS secrets envelope           | KMS etcd encryption (Key Vault key)                |
 | VPC interface/S3 endpoints     | Private Endpoints                                  |
 | Bastion + SSM                  | `az aks command invoke` (Azure Bastion optional)   |
-| AWS Load Balancer Controller   | App Gateway for Containers ALB Controller (extension) |
+| AWS Load Balancer Controller   | App Gateway for Containers ALB Controller (Helm via `command invoke`) |
 | `public_access_cidrs`          | private cluster (no public endpoint)               |
 
 ## Three deliberate divergences from the EKS project
@@ -36,10 +36,14 @@ primitives. The valuable ~30% is three deliberate divergences (see below).
 2. **Private cluster + `az aks command invoke`** replaces public-endpoint + CIDR
    allowlist — the API server has no public endpoint; CI drives it through the AKS
    managed tunnel, so no self-hosted runners are required.
-3. **Cluster extension replaces Terraform Helm** — because the private API is
-   unreachable from GitHub-hosted runners, the ingress controller is installed by
-   the Azure control plane as a managed extension, not via the `helm` provider. The
+3. **Helm via `command invoke` replaces the Terraform Helm provider** — because
+   the private API is unreachable from GitHub-hosted runners, the ingress
+   controller is installed by running Helm through `az aks command invoke` (the
+   AKS managed tunnel), not via the Terraform `helm` provider. The
    `kubernetes`/`helm` providers are therefore dropped from `workload`.
+   *(Originally planned as a managed cluster extension; that was abandoned after
+   the AGC ALB Controller proved to have no supported AKS extension type —
+   `command invoke` + Helm is the private-cluster-safe install path.)*
 
 ## 1. Two-layer split (`foundation` + `workload`)
 
@@ -87,11 +91,17 @@ the cluster OIDC issuer), and narrowly scoped **role assignments**. The service
 account is annotated with the identity client ID so the Workload Identity webhook
 injects a token. AAD Pod Identity is deprecated and not used.
 
-## 6. Add-ons — ALB Controller as a cluster extension
+## 6. Add-ons — ALB Controller via Helm over `command invoke`
 
-The Application Gateway for Containers ALB Controller is installed via
-`azurerm_kubernetes_cluster_extension` (the Azure control plane installs it; the
-runner needs no API reachability), authorized through Workload Identity (§5). Core
+The Application Gateway for Containers ALB Controller is installed by running its
+Helm chart through `az aks command invoke` in the deploy workflow (no runner API
+reachability, no Terraform helm/kubernetes provider). Terraform owns only the
+Azure-side Workload Identity (§5) — the user-assigned identity, federated
+credential, and scoped role assignments — and passes the identity client ID into
+the Helm release. A managed cluster extension was the original plan but the AGC
+ALB Controller has no supported AKS extension type (confirmed by a 400
+`ExtensionTypeRegistrationGetFailed`), so the managed-tunnel Helm install is used.
+Core
 add-ons (CoreDNS, kube-proxy) are AKS-managed and the CNI is a cluster property, so
 the EKS `eks-addons` "core add-ons as code / version-skew" effort has no Azure
 counterpart — documented here rather than inventing parity busywork.
