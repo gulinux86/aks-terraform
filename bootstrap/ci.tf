@@ -20,27 +20,27 @@ locals {
 }
 
 resource "azurerm_federated_identity_credential" "ci_plan" {
-  name      = "github-plan-pull-request"
-  parent_id = azurerm_user_assigned_identity.ci.id
-  audience  = local.github_audience
-  issuer    = local.github_oidc_issuer
-  subject   = "repo:${var.github_repository}:pull_request"
+  name                      = "github-plan-pull-request"
+  user_assigned_identity_id = azurerm_user_assigned_identity.ci.id
+  audience                  = local.github_audience
+  issuer                    = local.github_oidc_issuer
+  subject                   = "repo:${var.github_repository}:pull_request"
 }
 
 resource "azurerm_federated_identity_credential" "ci_hml" {
-  name      = "github-deploy-hml"
-  parent_id = azurerm_user_assigned_identity.ci.id
-  audience  = local.github_audience
-  issuer    = local.github_oidc_issuer
-  subject   = "repo:${var.github_repository}:environment:hml"
+  name                      = "github-deploy-hml"
+  user_assigned_identity_id = azurerm_user_assigned_identity.ci.id
+  audience                  = local.github_audience
+  issuer                    = local.github_oidc_issuer
+  subject                   = "repo:${var.github_repository}:environment:hml"
 }
 
 resource "azurerm_federated_identity_credential" "ci_prod" {
-  name      = "github-deploy-prod"
-  parent_id = azurerm_user_assigned_identity.ci.id
-  audience  = local.github_audience
-  issuer    = local.github_oidc_issuer
-  subject   = "repo:${var.github_repository}:environment:prod"
+  name                      = "github-deploy-prod"
+  user_assigned_identity_id = azurerm_user_assigned_identity.ci.id
+  audience                  = local.github_audience
+  issuer                    = local.github_oidc_issuer
+  subject                   = "repo:${var.github_repository}:environment:prod"
 }
 
 # ---------------------------------------------------------------------------

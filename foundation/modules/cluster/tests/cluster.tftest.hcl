@@ -98,6 +98,7 @@ run "observability_when_workspace_wired" {
   command = plan
 
   variables {
+    observability_enabled      = true
     log_analytics_workspace_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/test-law"
   }
 
